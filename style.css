@@ -439,6 +439,7 @@ input:checked + .slider:before{
 
 .card:hover{
     transform:scale(1.03);
+    transition-delay: 2s,
 }
 
 .card img{
