@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -84,12 +85,6 @@ body{
     word-wrap:break-word;
     animation:show 0.3s ease;
     user-select:none;
-}
-
-/* أول رسالة */
-
-.firstMsg{
-    margin-top:0;
 }
 
 /* رسالتي */
@@ -248,7 +243,7 @@ body{
 
 <div id="header">
 
-👤 &nbsp&nbsp
+👤 &nbsp;&nbsp;
 
 <span id="userName">User</span>
 
@@ -302,7 +297,7 @@ import {
 
 const firebaseConfig = {
 
-  apiKey: "AIzaSyBmZTXttD3fFn6YJKsjnDiHcw-DU932CKo",
+  apiKey: "YOUR_API_KEY",
   authDomain: "chat-82b87.firebaseapp.com",
   projectId: "chat-82b87",
   storageBucket: "chat-82b87.firebasestorage.app",
@@ -409,10 +404,6 @@ onSnapshot(q, (snapshot)=>{
 
     box.innerHTML = "";
 
-    let currentGroup = null;
-
-    let lastUserId = null;
-
     snapshot.forEach((docSnap)=>{
 
         const data = docSnap.data();
@@ -421,45 +412,23 @@ onSnapshot(q, (snapshot)=>{
 
         const isMe = data.userId === userId;
 
-        // لو الشخص اتغير اعمل جروب جديد
+        // container
 
-        if(lastUserId !== data.userId){
+        const wrapper = document.createElement("div");
 
-            currentGroup = document.createElement("div");
+        wrapper.className = `msgGroup ${isMe ? 'me' : 'other'}`;
 
-            currentGroup.className = `msgGroup ${isMe ? 'me' : 'other'}`;
-
-            box.appendChild(currentGroup);
-
-        }
-
-        // الرسالة
+        // message
 
         const msg = document.createElement("div");
 
         msg.className = `msg ${isMe ? 'myMsg' : 'otherMsg'}`;
 
-        // أول رسالة في الجروب يظهر الاسم
-
-        let showName = false;
-
-        if(lastUserId !== data.userId){
-
-            showName = true;
-
-            msg.classList.add("firstMsg");
-
-        }
-
         msg.innerHTML = `
-
-        ${showName ? `
 
         <span class="name">
         ${data.name}
         </span>
-
-        ` : ""}
 
         ${data.reply ? `
 
@@ -492,7 +461,9 @@ onSnapshot(q, (snapshot)=>{
 
         `;
 
-        // swipe reply
+        // =========================
+        // Reply بالموبايل
+        // =========================
 
         let startX = 0;
 
@@ -540,9 +511,21 @@ onSnapshot(q, (snapshot)=>{
 
         });
 
-        currentGroup.appendChild(msg);
+        // =========================
+        // Reply بالكمبيوتر
+        // =========================
 
-        lastUserId = data.userId;
+        msg.addEventListener("contextmenu",(e)=>{
+
+            e.preventDefault();
+
+            setReply(data.name,data.text);
+
+        });
+
+        wrapper.appendChild(msg);
+
+        box.appendChild(wrapper);
 
     });
 
@@ -554,3 +537,4 @@ onSnapshot(q, (snapshot)=>{
 
 </body>
 </html>
+```
