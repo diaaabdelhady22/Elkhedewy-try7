@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+
+<title>Live Chat</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Lateef:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+
+body{
+    background-color:#030303;
+    margin:0;
+    color:white;
+    font-family:"Lateef", serif;
+    overflow-x:hidden;
+}
+
+/* الهيدر */
+
+#header{
+    width:100%;
+    height:170px;
+    background:white;
+    color:black;
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:70px;
+    z-index:999;
+    box-shadow:0 0 20px rgba(255,255,255,0.2);
+}
+
+/* اسم المستخدم */
+
+#userName{
+    margin-right:20px;
+}
+
+/* الشات */
+
+#chatBox{
+    margin-top:190px;
+    padding:20px;
+    padding-bottom:250px;
+}
+
+/* الرسالة */
+
+.msg{
+    max-width:75%;
+    padding:25px;
+    margin-top:25px;
+    border-radius:35px;
+    font-size:55px;
+    position:relative;
+    word-wrap:break-word;
+    clear:both;
+    animation:show 0.3s ease;
+}
+
+/* رسالتي */
+
+.myMsg{
+    background:white;
+    color:black;
+    margin-left:auto;
+    text-align:right;
+    border-bottom-right-radius:5px;
+}
+
+/* رسائل الناس */
+
+.otherMsg{
+    background:#1e1e1e;
+    color:white;
+    margin-right:auto;
+    text-align:left;
+    border-bottom-left-radius:5px;
+}
+
+/* الاسم */
+
+.name{
+    display:block;
+    font-size:45px;
+    margin-bottom:10px;
+    color:#00bfff;
+    font-weight:bold;
+}
+
+/* زر الحذف */
+
+.delBtn{
+    background:red;
+    color:white;
+    border:none;
+    border-radius:20px;
+    padding:5px 15px;
+    font-size:35px;
+    margin-top:15px;
+    font-family:"Lateef", serif;
+}
+
+/* الكتابة */
+
+#controls{
+    width:100%;
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#111;
+    padding:20px;
+    display:flex;
+    gap:20px;
+    box-sizing:border-box;
+}
+
+/* input */
+
+#msgInput{
+    flex:1;
+    height:120px;
+    border:none;
+    border-radius:40px;
+    font-size:55px;
+    padding-right:30px;
+    font-family:"Lateef", serif;
+    outline:none;
+}
+
+/* زر الإرسال */
+
+.sendBtn{
+    width:220px;
+    border:none;
+    border-radius:40px;
+    background:white;
+    color:black;
+    font-size:55px;
+    font-family:"Lateef", serif;
+}
+
+/* انيميشن */
+
+@keyframes show{
+
+    from{
+        opacity:0;
+        transform:translateY(20px);
+    }
+
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="header">
+
+👤 &nbsp&nbsp
+
+<span id="userName">User</span>
+
+</div>
+
+<div id="chatBox"></div>
+
+<div id="controls">
+
+<input id="msgInput" placeholder="      اكتب سؤالك... ">
+
+<button class="sendBtn" onclick="sendMsg()">
+إرسال
+</button>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+
+import {
+
+  getFirestore,
+  collection,
+  addDoc,
+  onSnapshot,
+  query,
+  orderBy,
+  deleteDoc,
+  doc
+
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+
+// Firebase
+
+const firebaseConfig = {
+
+  apiKey: "AIzaSyBmZTXttD3fFn6YJKsjnDiHcw-DU932CKo",
+  authDomain: "chat-82b87.firebaseapp.com",
+  projectId: "chat-82b87",
+  storageBucket: "chat-82b87.firebasestorage.app",
+  messagingSenderId: "934528193582",
+  appId: "1:934528193582:web:7bbfbbacf73a758bccfbbf"
+
+};
+
+const app = initializeApp(firebaseConfig);
+
+const db = getFirestore(app);
+
+
+// بيانات المستخدم
+
+const name = localStorage.getItem("userName") || "Unknown";
+
+const userId = localStorage.getItem("userId");
+
+document.getElementById("userName").textContent = name;
+
+
+// إرسال رسالة
+
+window.sendMsg = async function(){
+
+    const input = document.getElementById("msgInput");
+
+    if(input.value.trim() === "") return;
+
+    await addDoc(collection(db, "messages"), {
+
+        name:name,
+        userId:userId,
+        text:input.value,
+        time:Date.now()
+
+    });
+
+    input.value = "";
+
+};
+
+
+// حذف رسالة
+
+window.deleteMsg = async function(id){
+
+    await deleteDoc(doc(db, "messages", id));
+
+};
+
+
+// عرض الرسائل
+
+const q = query(collection(db, "messages"), orderBy("time"));
+
+onSnapshot(q, (snapshot)=>{
+
+    const box = document.getElementById("chatBox");
+
+    box.innerHTML = "";
+
+    snapshot.forEach((docSnap)=>{
+
+        const data = docSnap.data();
+
+        const id = docSnap.id;
+
+        const isMe = data.userId === userId;
+
+        box.innerHTML += `
+
+        <div class="msg ${isMe ? 'myMsg' : 'otherMsg'}">
+
+            <span class="name">
+            ${data.name}
+            </span>
+
+            ${data.text}
+
+            ${isMe ? `
+
+            <br>
+
+            <button class="delBtn"
+            onclick="deleteMsg('${id}')">
+
+            حذف
+
+            </button>
+
+            ` : ""}
+
+        </div>
+
+        `;
+
+    });
+
+    box.scrollTop = box.scrollHeight;
+
+});
+
+</script>
+
+</body>
+</html>

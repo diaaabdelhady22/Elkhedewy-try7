@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Live Chat</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: linear-gradient(135deg, #0f0f0f, #1c1c1c);
+  color: white;
+  margin: 0;
+  padding: 20px;
+}
+
+#header {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px);
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  font-size: 18px;
+}
+
+#chatBox {
+  height: 420px;
+  overflow-y: auto;
+  background: rgba(255,255,255,0.03);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.msg {
+  margin: 8px 0;
+  padding: 10px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 10px;
+  position: relative;
+  animation: fadeIn 0.3s ease;
+}
+
+.name {
+  color: #00ffcc;
+  font-weight: bold;
+}
+
+.delBtn {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  background: red;
+  border: none;
+  color: white;
+  padding: 3px 6px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#controls {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+input {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  outline: none;
+}
+
+button {
+  padding: 12px 15px;
+  border: none;
+  border-radius: 10px;
+  background: #00ffcc;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+@keyframes fadeIn {
+  from {opacity: 0; transform: translateY(5px);}
+  to {opacity: 1; transform: translateY(0);}
+}
+</style>
+
+</head>
+
+<body>
+
+<div id="header">
+  👤 <span id="userName">User</span>
+</div>
+
+<div id="chatBox"></div>
+
+<div id="controls">
+  <input id="msgInput" placeholder="اكتب رسالة...">
+  <button onclick="sendMsg()">إرسال</button>
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  onSnapshot,
+  query,
+  orderBy,
+  deleteDoc,
+  doc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+
+// 🔥 Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyBmZTXttD3fFn6YJKsjnDiHcw-DU932CKo",
+  authDomain: "chat-82b87.firebaseapp.com",
+  projectId: "chat-82b87",
+  storageBucket: "chat-82b87.firebasestorage.app",
+  messagingSenderId: "934528193582",
+  appId: "1:934528193582:web:7bbfbbacf73a758bccfbbf"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// 👤 اسم المستخدم
+const name = localStorage.getItem("userName") || "Unknown";
+document.getElementById("userName").textContent = name;
+
+
+// 📤 إرسال رسالة
+window.sendMsg = async function () {
+  const input = document.getElementById("msgInput");
+
+  if (input.value.trim() === "") return;
+
+  await addDoc(collection(db, "messages"), {
+    name: name,
+    text: input.value,
+    time: Date.now()
+  });
+
+  input.value = "";
+};
+
+
+// 🗑 حذف رسالة
+window.deleteMsg = async function (id) {
+  await deleteDoc(doc(db, "messages", id));
+};
+
+
+// 📥 عرض الرسائل لايف
+const q = query(collection(db, "messages"), orderBy("time"));
+
+onSnapshot(q, (snapshot) => {
+  const box = document.getElementById("chatBox");
+  box.innerHTML = "";
+
+  snapshot.forEach((docSnap) => {
+    const data = docSnap.data();
+    const id = docSnap.id;
+
+    box.innerHTML += `
+      <div class="msg">
+        <span class="name">${data.name}:</span>
+        ${data.text}
+
+        <button class="delBtn" onclick="deleteMsg('${id}')">🗑</button>
+      </div>
+    `;
+  });
+
+  box.scrollTop = box.scrollHeight;
+});
+
+</script>
+
+</body>
+</html>
