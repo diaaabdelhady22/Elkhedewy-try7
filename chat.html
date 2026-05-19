@@ -109,9 +109,15 @@ body{
 .name{
     display:block;
     font-size:45px;
-    margin-bottom:10px;
+    margin-bottom:15px;
     color:#00bfff;
     font-weight:bold;
+}
+
+/* النص الأساسي */
+
+.mainText{
+    line-height:1.4;
 }
 
 /* زر الحذف */
@@ -123,38 +129,32 @@ body{
     border-radius:20px;
     padding:5px 15px;
     font-size:35px;
-    margin-top:15px;
+    margin-top:20px;
     font-family:"Lateef", serif;
 }
 
 /* الرد */
 
 .replyContainer{
-    display:flex;
-    align-items:stretch;
-    margin-bottom:15px;
+    margin-top:25px;
+    margin-right:25px;
+    padding-right:25px;
+    border-right:6px solid #00bfff;
 }
 
-.replyLine{
-    width:8px;
-    background:#00bfff;
-    border-radius:20px;
-    margin-left:12px;
-}
-
-.replyBox{
-    flex:1;
-    background:rgba(255,255,255,0.1);
-    padding:10px 20px;
-    border-radius:20px;
-    font-size:35px;
-    opacity:0.9;
+.replyMsg{
+    margin-top:15px;
+    padding:18px;
+    border-radius:25px;
+    background:rgba(255,255,255,0.08);
+    font-size:40px;
 }
 
 .replyName{
     color:#00bfff;
-    font-size:33px;
     display:block;
+    margin-bottom:10px;
+    font-size:35px;
 }
 
 /* الكتابة */
@@ -387,7 +387,7 @@ window.setReply = function(name,text){
 
     document.getElementById("replyPreview").style.display = "block";
 
-    document.getElementById("replyPreviewName").innerText = name;
+    document.getElementById("replyPreviewName").innerText = "Reply to " + name;
 
     document.getElementById("replyPreviewText").innerText = text;
 
@@ -441,16 +441,18 @@ onSnapshot(q, (snapshot)=>{
         ${data.name}
         </span>
 
+        <div class="mainText">
+        ${data.text}
+        </div>
+
         ${data.reply ? `
 
         <div class="replyContainer">
 
-            <div class="replyLine"></div>
-
-            <div class="replyBox">
+            <div class="replyMsg">
 
                 <span class="replyName">
-                ${data.reply.name}
+                رد على ${data.reply.name}
                 </span>
 
                 ${data.reply.text}
@@ -460,8 +462,6 @@ onSnapshot(q, (snapshot)=>{
         </div>
 
         ` : ""}
-
-        ${data.text}
 
         ${isMe ? `
 
