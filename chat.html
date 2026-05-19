@@ -114,7 +114,7 @@ body{
     font-weight:bold;
 }
 
-/* النص الأساسي */
+/* النص */
 
 .mainText{
     line-height:1.4;
@@ -133,22 +133,45 @@ body{
     font-family:"Lateef", serif;
 }
 
-/* الرد */
+/* الرسالة الأساسية */
 
-.replyContainer{
-    margin-top:25px;
-    margin-right:25px;
-    padding-right:25px;
-    border-right:6px solid #00bfff;
+.mainMessage{
+    position:relative;
 }
+
+/* الريپلاي */
+
+.replyWrapper{
+    position:relative;
+    margin-top:20px;
+    margin-right:70px;
+    padding-top:25px;
+}
+
+/* الخط العمودي */
+
+.replyVertical{
+    position:absolute;
+    right:-35px;
+    top:-25px;
+    width:6px;
+    height:70px;
+    background:#00bfff;
+    border-radius:20px;
+}
+
+/* صندوق الرد */
 
 .replyMsg{
-    margin-top:15px;
-    padding:18px;
-    border-radius:25px;
     background:rgba(255,255,255,0.08);
+    padding:18px 22px;
+    border-radius:25px;
     font-size:40px;
+    width:fit-content;
+    max-width:90%;
 }
+
+/* اسم الشخص */
 
 .replyName{
     color:#00bfff;
@@ -437,22 +460,28 @@ onSnapshot(q, (snapshot)=>{
 
         msg.innerHTML = `
 
-        <span class="name">
-        ${data.name}
-        </span>
+        <div class="mainMessage">
 
-        <div class="mainText">
-        ${data.text}
+            <span class="name">
+            ${data.name}
+            </span>
+
+            <div class="mainText">
+            ${data.text}
+            </div>
+
         </div>
 
         ${data.reply ? `
 
-        <div class="replyContainer">
+        <div class="replyWrapper">
+
+            <div class="replyVertical"></div>
 
             <div class="replyMsg">
 
                 <span class="replyName">
-                رد على ${data.reply.name}
+                ${data.reply.name}
                 </span>
 
                 ${data.reply.text}
@@ -478,9 +507,7 @@ onSnapshot(q, (snapshot)=>{
 
         `;
 
-        // =========================
         // Reply بالموبايل
-        // =========================
 
         let startX = 0;
 
@@ -528,9 +555,7 @@ onSnapshot(q, (snapshot)=>{
 
         });
 
-        // =========================
         // Reply بالكمبيوتر
-        // =========================
 
         msg.addEventListener("contextmenu",(e)=>{
 
