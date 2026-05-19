@@ -51,7 +51,25 @@ body{
 #chatBox{
     margin-top:190px;
     padding:20px;
-    padding-bottom:250px;
+    padding-bottom:300px;
+    display:flex;
+    flex-direction:column;
+}
+
+/* مجموعة الرسائل */
+
+.msgGroup{
+    display:flex;
+    flex-direction:column;
+    margin-bottom:25px;
+}
+
+.msgGroup.me{
+    align-items:flex-end;
+}
+
+.msgGroup.other{
+    align-items:flex-start;
 }
 
 /* الرسالة */
@@ -59,13 +77,19 @@ body{
 .msg{
     max-width:75%;
     padding:25px;
-    margin-top:25px;
+    margin-top:8px;
     border-radius:35px;
     font-size:55px;
     position:relative;
     word-wrap:break-word;
-    clear:both;
     animation:show 0.3s ease;
+    user-select:none;
+}
+
+/* أول رسالة */
+
+.firstMsg{
+    margin-top:0;
 }
 
 /* رسالتي */
@@ -73,7 +97,6 @@ body{
 .myMsg{
     background:white;
     color:black;
-    margin-left:auto;
     text-align:right;
     border-bottom-right-radius:5px;
 }
@@ -83,7 +106,6 @@ body{
 .otherMsg{
     background:#1e1e1e;
     color:white;
-    margin-right:auto;
     text-align:left;
     border-bottom-left-radius:5px;
 }
@@ -109,6 +131,24 @@ body{
     font-size:35px;
     margin-top:15px;
     font-family:"Lateef", serif;
+}
+
+/* الرد */
+
+.replyBox{
+    border-right:8px solid #00bfff;
+    background:rgba(255,255,255,0.1);
+    padding:10px 20px;
+    border-radius:20px;
+    margin-bottom:15px;
+    font-size:35px;
+    opacity:0.9;
+}
+
+.replyName{
+    color:#00bfff;
+    font-size:33px;
+    display:block;
 }
 
 /* الكتابة */
@@ -151,6 +191,39 @@ body{
     font-family:"Lateef", serif;
 }
 
+/* صندوق الريپلاي */
+
+#replyPreview{
+    position:fixed;
+    bottom:170px;
+    right:20px;
+    left:20px;
+    background:#1a1a1a;
+    border-right:10px solid #00bfff;
+    padding:15px 25px;
+    border-radius:25px;
+    display:none;
+    z-index:999;
+}
+
+#replyPreviewName{
+    color:#00bfff;
+    font-size:40px;
+}
+
+#replyPreviewText{
+    font-size:35px;
+}
+
+#cancelReply{
+    position:absolute;
+    left:20px;
+    top:15px;
+    font-size:40px;
+    color:red;
+    cursor:pointer;
+}
+
 /* انيميشن */
 
 @keyframes show{
@@ -182,6 +255,20 @@ body{
 </div>
 
 <div id="chatBox"></div>
+
+<!-- preview reply -->
+
+<div id="replyPreview">
+
+<div id="cancelReply" onclick="cancelReply()">
+✖
+</div>
+
+<div id="replyPreviewName"></div>
+
+<div id="replyPreviewText"></div>
+
+</div>
 
 <div id="controls">
 
@@ -238,6 +325,11 @@ const userId = localStorage.getItem("userId");
 document.getElementById("userName").textContent = name;
 
 
+// بيانات الريپلاي
+
+let replyData = null;
+
+
 // إرسال رسالة
 
 window.sendMsg = async function(){
@@ -251,11 +343,20 @@ window.sendMsg = async function(){
         name:name,
         userId:userId,
         text:input.value,
-        time:Date.now()
+        time:Date.now(),
+
+        reply: replyData ? {
+
+            name: replyData.name,
+            text: replyData.text
+
+        } : null
 
     });
 
     input.value = "";
+
+    cancelReply();
 
 };
 
@@ -265,6 +366,35 @@ window.sendMsg = async function(){
 window.deleteMsg = async function(id){
 
     await deleteDoc(doc(db, "messages", id));
+
+};
+
+
+// فتح الريپلاي
+
+window.setReply = function(name,text){
+
+    replyData = {
+        name:name,
+        text:text
+    };
+
+    document.getElementById("replyPreview").style.display = "block";
+
+    document.getElementById("replyPreviewName").innerText = name;
+
+    document.getElementById("replyPreviewText").innerText = text;
+
+};
+
+
+// إلغاء الريپلاي
+
+window.cancelReply = function(){
+
+    replyData = null;
+
+    document.getElementById("replyPreview").style.display = "none";
 
 };
 
@@ -279,6 +409,10 @@ onSnapshot(q, (snapshot)=>{
 
     box.innerHTML = "";
 
+    let currentGroup = null;
+
+    let lastUserId = null;
+
     snapshot.forEach((docSnap)=>{
 
         const data = docSnap.data();
@@ -287,36 +421,132 @@ onSnapshot(q, (snapshot)=>{
 
         const isMe = data.userId === userId;
 
-        box.innerHTML += `
+        // لو الشخص اتغير اعمل جروب جديد
 
-        <div class="msg ${isMe ? 'myMsg' : 'otherMsg'}">
+        if(lastUserId !== data.userId){
 
-            <span class="name">
-            ${data.name}
+            currentGroup = document.createElement("div");
+
+            currentGroup.className = `msgGroup ${isMe ? 'me' : 'other'}`;
+
+            box.appendChild(currentGroup);
+
+        }
+
+        // الرسالة
+
+        const msg = document.createElement("div");
+
+        msg.className = `msg ${isMe ? 'myMsg' : 'otherMsg'}`;
+
+        // أول رسالة في الجروب يظهر الاسم
+
+        let showName = false;
+
+        if(lastUserId !== data.userId){
+
+            showName = true;
+
+            msg.classList.add("firstMsg");
+
+        }
+
+        msg.innerHTML = `
+
+        ${showName ? `
+
+        <span class="name">
+        ${data.name}
+        </span>
+
+        ` : ""}
+
+        ${data.reply ? `
+
+        <div class="replyBox">
+
+            <span class="replyName">
+            ${data.reply.name}
             </span>
 
-            ${data.text}
-
-            ${isMe ? `
-
-            <br>
-
-            <button class="delBtn"
-            onclick="deleteMsg('${id}')">
-
-            حذف
-
-            </button>
-
-            ` : ""}
+            ${data.reply.text}
 
         </div>
 
+        ` : ""}
+
+        ${data.text}
+
+        ${isMe ? `
+
+        <br>
+
+        <button class="delBtn"
+        onclick="deleteMsg('${id}')">
+
+        حذف
+
+        </button>
+
+        ` : ""}
+
         `;
+
+        // swipe reply
+
+        let startX = 0;
+
+        msg.addEventListener("touchstart",(e)=>{
+
+            startX = e.touches[0].clientX;
+
+        });
+
+        msg.addEventListener("touchmove",(e)=>{
+
+            let moveX = e.touches[0].clientX;
+
+            let diff = moveX - startX;
+
+            if(diff > 0){
+
+                msg.style.transform = `translateX(${diff}px)`;
+
+            }
+
+        });
+
+        msg.addEventListener("touchend",(e)=>{
+
+            let endX = e.changedTouches[0].clientX;
+
+            let diff = endX - startX;
+
+            msg.style.transition = "0.2s";
+
+            msg.style.transform = "translateX(0px)";
+
+            setTimeout(()=>{
+
+                msg.style.transition = "";
+
+            },200);
+
+            if(diff > 120){
+
+                setReply(data.name,data.text);
+
+            }
+
+        });
+
+        currentGroup.appendChild(msg);
+
+        lastUserId = data.userId;
 
     });
 
-    box.scrollTop = box.scrollHeight;
+    window.scrollTo(0, document.body.scrollHeight);
 
 });
 
