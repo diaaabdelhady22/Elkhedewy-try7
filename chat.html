@@ -133,45 +133,22 @@ body{
     font-family:"Lateef", serif;
 }
 
-/* الرسالة الأساسية */
+/* الرد الحقيقي */
 
-.mainMessage{
-    position:relative;
+.replyThread{
+    margin-top:25px;
+    margin-right:60px;
+    padding-right:25px;
+    border-right:6px solid #00bfff;
 }
 
-/* الريپلاي */
-
-.replyWrapper{
-    position:relative;
+.replyBubble{
     margin-top:20px;
-    margin-right:70px;
-    padding-top:25px;
-}
-
-/* الخط العمودي */
-
-.replyVertical{
-    position:absolute;
-    right:-35px;
-    top:-25px;
-    width:6px;
-    height:70px;
-    background:#00bfff;
-    border-radius:20px;
-}
-
-/* صندوق الرد */
-
-.replyMsg{
     background:rgba(255,255,255,0.08);
-    padding:18px 22px;
+    padding:18px;
     border-radius:25px;
     font-size:40px;
-    width:fit-content;
-    max-width:90%;
 }
-
-/* اسم الشخص */
 
 .replyName{
     color:#00bfff;
@@ -438,66 +415,85 @@ onSnapshot(q, (snapshot)=>{
 
     box.innerHTML = "";
 
+    const messages = [];
+
     snapshot.forEach((docSnap)=>{
 
-        const data = docSnap.data();
+        messages.push({
 
-        const id = docSnap.id;
+            id: docSnap.id,
+            ...docSnap.data()
+
+        });
+
+    });
+
+    messages.forEach((data)=>{
+
+        // لو الرسالة دي Reply متعرضهاش لوحدها
+
+        if(data.reply) return;
 
         const isMe = data.userId === userId;
-
-        // container
 
         const wrapper = document.createElement("div");
 
         wrapper.className = `msgGroup ${isMe ? 'me' : 'other'}`;
 
-        // message
-
         const msg = document.createElement("div");
 
         msg.className = `msg ${isMe ? 'myMsg' : 'otherMsg'}`;
 
+        // دور على الردود الخاصة بالرسالة
+
+        const replies = messages.filter(m => 
+            m.reply &&
+            m.reply.text === data.text &&
+            m.reply.name === data.name
+        );
+
+        let repliesHTML = "";
+
+        replies.forEach(reply => {
+
+            repliesHTML += `
+
+            <div class="replyThread">
+
+                <div class="replyBubble">
+
+                    <span class="replyName">
+                    ${reply.name}
+                    </span>
+
+                    ${reply.text}
+
+                </div>
+
+            </div>
+
+            `;
+
+        });
+
         msg.innerHTML = `
 
-        <div class="mainMessage">
+        <span class="name">
+        ${data.name}
+        </span>
 
-            <span class="name">
-            ${data.name}
-            </span>
-
-            <div class="mainText">
-            ${data.text}
-            </div>
-
+        <div class="mainText">
+        ${data.text}
         </div>
 
-        ${data.reply ? `
-
-        <div class="replyWrapper">
-
-            <div class="replyVertical"></div>
-
-            <div class="replyMsg">
-
-                <span class="replyName">
-                ${data.reply.name}
-                </span>
-
-                ${data.reply.text}
-
-            </div>
-
-        </div>
-
-        ` : ""}
+        ${repliesHTML}
 
         ${isMe ? `
 
         <br>
 
         <button class="delBtn"
-        onclick="deleteMsg('${id}')">
+        onclick="deleteMsg('${data.id}')">
 
         حذف
 
